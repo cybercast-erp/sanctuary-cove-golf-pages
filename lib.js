@@ -107,6 +107,7 @@ function render({ title, content, zoom = 1, refresh = 0, source, fetchedAt = new
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
+<link rel="icon" href="data:,">
 <title>${esc(title)}</title>
 <style>
   html { font-size: calc(14px * ${zoom}); }
