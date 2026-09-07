@@ -1,0 +1,13 @@
+{
+  "name": "sanctuary-golf-schedule",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static GitHub Pages build of the Sanctuary Cove Social Sunday schedule (clean, full-width, no flicker)",
+  "scripts": {
+    "build": "node build.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
