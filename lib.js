@@ -4,6 +4,9 @@ const { URL } = require('node:url');
 
 const DEFAULT_URL = 'https://www.sanctuarycovegolf.com.au/cms/social-sunday-schedule/';
 const UA = 'Mozilla/5.0 (compatible; SanctuaryScheduleProxy/1.0)';
+// Theme asset base: the page loads the same webfonts the original site uses.
+const THEME = 'https://www.sanctuarycovegolf.com.au/cms/wp-content/themes/Sanctuary';
+const FONT_FILES = ['fonts/avenir-book-webfont.woff2', 'fonts/avenir-medium-webfont.woff2', 'webFonts/JansonTextLTProRoman/font.woff2'];
 
 /** Extract the outer HTML of the first element with the given id (balanced tag matching). */
 function extractById(html, id) {
@@ -108,21 +111,32 @@ function render({ title, content, zoom = 1, refresh = 0, source, fetchedAt = new
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <link rel="icon" href="data:,">
+${FONT_FILES.map((f) => `<link rel="preload" as="font" type="font/woff2" crossorigin href="${THEME}/${f}">`).join('\n')}
 <title>${esc(title)}</title>
 <style>
+  /* Fonts from the Sanctuary theme (same files the original page loads). */
+  @font-face { font-family: 'avenirregular'; font-display: block; font-weight: normal; font-style: normal;
+    src: url('${THEME}/fonts/avenir-book-webfont.woff2') format('woff2'), url('${THEME}/fonts/avenir-book-webfont.woff') format('woff'); }
+  @font-face { font-family: 'avenirmedium'; font-display: block; font-weight: normal; font-style: normal;
+    src: url('${THEME}/fonts/avenir-medium-webfont.woff2') format('woff2'), url('${THEME}/fonts/avenir-medium-webfont.woff') format('woff'); }
+  @font-face { font-family: 'JansonTextLTPro-Roman'; font-display: block;
+    src: url('${THEME}/webFonts/JansonTextLTProRoman/font.woff2') format('woff2'), url('${THEME}/webFonts/JansonTextLTProRoman/font.woff') format('woff'); }
+
   html { font-size: calc(14px * ${zoom}); }
   html, body { margin: 0; padding: 0; width: 100%; min-height: 100%; background: #fff; }
   body {
-    font-family: 'Avenir', 'Avenir Next', Helvetica, Arial, sans-serif;
+    /* Matches original computed styles: avenirregular 14px / 21px, #555 */
+    font-family: 'avenirregular', Helvetica, Arial, sans-serif;
     font-size: 1rem;
     line-height: 1.5;
     color: #555;
     -webkit-text-size-adjust: 100%;
   }
-  #proxy-root { width: 100%; box-sizing: border-box; padding: 0 2vw 2vw; }
+  #proxy-root { width: 100%; box-sizing: border-box; padding: 0 20px 20px; }
   #proxy-root > * { width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; float: none !important; }
-  h1 { font-family: 'Avenir Medium', 'Avenir', Helvetica, Arial, sans-serif; font-weight: normal; font-size: 2em; margin: 0; padding: 0.6em 0; line-height: 1.5; }
-  h2, h3, h4 { font-weight: normal; margin: 0.6em 0; }
+  /* Original h1: JansonTextLTPro-Roman 28px / 42px, #555, padding 20px 0 */
+  h1 { font-family: 'JansonTextLTPro-Roman', 'jansonlt', Georgia, 'Times New Roman', serif; font-weight: normal; font-size: 2em; margin: 0; padding: 20px 0; line-height: 1.5; color: #555; border: none; }
+  h2, h3, h4, h5, h6 { font-family: 'avenirmedium', Helvetica, Arial, sans-serif; font-weight: normal; margin: 10px 0; line-height: 1.5; }
   table { border-collapse: collapse; width: 100% !important; max-width: none !important; table-layout: auto; }
   td, th { text-align: left; vertical-align: top; }
   img { max-width: 100%; height: auto; }
