@@ -2,7 +2,7 @@ name: Build & deploy schedule to GitHub Pages
 
 on:
   schedule:
-    - cron: '*/30 * * * *'   # every 30 min (GitHub may delay/skip; minimum is 5 min)
+    - cron: '0 18 * * *'     # daily 04:00 AEST: refreshes the baked fallback copy; the page itself fetches live data on load
   push:
     branches: [main]
   workflow_dispatch:

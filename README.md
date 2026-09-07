@@ -7,13 +7,17 @@ full-width static page containing only the schedule table.
 Here the trimming happens at **build time** in GitHub Actions, so the browser only ever
 receives the finished page. No flicker.
 
-## How it works
+## How it works (hybrid)
 
-1. `.github/workflows/pages.yml` runs every 30 min (and on push / manual trigger).
-2. `build.js` fetches the schedule page, extracts `#pageContent`, strips widths/heights,
-   scripts and sidebar, and writes `dist/index.html`.
-3. The `dist` folder is deployed to GitHub Pages.
-4. If the golf site is down the build fails and the **previous** page stays live.
+1. **Build time:** `.github/workflows/pages.yml` runs daily (and on push / manual trigger).
+   `build.js` fetches the schedule page, extracts `#pageContent`, strips widths/heights,
+   scripts and sidebar, and writes `dist/index.html`. Deployed to GitHub Pages.
+2. **Page load:** the baked HTML paints instantly. A small script then fetches the golf site
+   directly (it sends `Access-Control-Allow-Origin: *`), trims it the same way, and swaps the
+   content in only if it changed. So the screen is always live, with no blank state.
+3. If the live fetch fails (site down, CORS removed) the baked copy simply stays.
+   `#proxy-root[data-live]` reports `baked`, `live`, or `failed: ...`.
+4. If the golf site is down at build time the build fails and the **previous** page stays live.
 
 ## One-time setup
 
