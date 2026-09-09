@@ -87,6 +87,10 @@ async function fetchUpstream(url, timeoutMs = 15000) {
 }
 
 function transform(html, url, contentId = 'pageContent') {
+  // Members-only pages redirect to a login form; never publish that.
+  if (/Members Login/i.test(getTitle(html)) || /\bid=["']login-(left|error)["']/.test(html)) {
+    throw new Error('page requires members login (not public)');
+  }
   let content = extractById(html, contentId) || extractById(html, 'page-wrap');
   if (!content) throw new Error(`#${contentId} / #page-wrap not found in upstream page`);
   content = removeById(content, 'right-column');
@@ -203,4 +207,41 @@ ${content}
 </html>`;
 }
 
-module.exports = { DEFAULT_URL, esc, fetchUpstream, transform, render };
+/** Root index listing every published page (same typography as the pages). */
+function renderIndex({ pages, source, fetchedAt = new Date() }) {
+  const items = pages
+    .map((p) => `<li><a href=".${esc(p.path)}">${esc(p.title.replace(/\s*-\s*Sanctuary Cove.*$/i, ''))}</a><br><small>${esc(p.path)}</small></li>`)
+    .join('\n');
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:,">
+<title>Sanctuary Cove display pages</title>
+<style>
+  @font-face { font-family: 'avenirregular'; font-display: swap; src: url('${THEME}/fonts/avenir-book-webfont.woff2') format('woff2'); }
+  @font-face { font-family: 'JansonTextLTPro-Roman'; font-display: swap; src: url('${THEME}/webFonts/JansonTextLTProRoman/font.woff2') format('woff2'); }
+  body { margin: 0; padding: 0 20px 20px; font: 14px/1.5 'avenirregular', Helvetica, Arial, sans-serif; color: #555; background: #fff; }
+  h1 { font: normal 28px/1.5 'JansonTextLTPro-Roman', Georgia, serif; margin: 0; padding: 20px 0; }
+  ul { list-style: none; margin: 0; padding: 0; max-width: 600px; }
+  li { padding: 10px 12px; } li:nth-child(even) { background: #ccd4dd; }
+  a { color: inherit; font-weight: bold; text-decoration: none; } a:hover { text-decoration: underline; }
+  small { opacity: .7; }
+  p { max-width: 600px; }
+</style>
+</head>
+<body>
+<h1>Sanctuary Cove display pages</h1>
+<ul>
+${items}
+</ul>
+<p>Each page mirrors the path on <a href="${esc(source)}">${esc(source)}</a>, trimmed to its content and stretched full width.
+Add <code>?zoom=1.8</code> to scale text for a TV, <code>?refresh=300</code> to change the reload interval.</p>
+<p><small>Built ${esc(new Date(fetchedAt).toISOString())}</small></p>
+</body>
+</html>`;
+}
+
+module.exports = { DEFAULT_URL, esc, fetchUpstream, transform, render, renderIndex };
