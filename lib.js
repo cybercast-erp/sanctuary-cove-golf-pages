@@ -99,7 +99,23 @@ function transform(html, url, contentId = 'pageContent') {
   content = content.replace(/\son[a-z]+=("|')[^"']*\1/gi, '');
   content = unconstrain(content);
   content = absolutise(content, url);
+  content = fixImages(content);
+  content = dropEmptyHeadings(content);
   return { title: getTitle(html), content };
+}
+
+/** WordPress galleries emit -300x300 thumbnails and lazy loading; a display wants the full file, now. */
+function fixImages(html) {
+  return html.replace(/<img\b[^>]*>/gi, (tag) =>
+    tag
+      .replace(/\s(srcset|sizes|loading|decoding)=("|')[^"']*\2/gi, '')
+      .replace(/(\ssrc=("|')[^"']*?)-\d+x\d+(\.(?:png|jpe?g|gif|webp))(\2)/i, '$1$3$4'),
+  );
+}
+
+/** Some templates ship an <h1> that is only spans/br with no text; it just adds a gap. */
+function dropEmptyHeadings(html) {
+  return html.replace(/<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/gi, (m, inner) => (inner.replace(/<[^>]+>/g, '').trim() ? m : ''));
 }
 
 /**
@@ -145,6 +161,11 @@ ${FONT_FILES.map((f) => `<link rel="preload" as="font" type="font/woff2" crossor
   td, th { text-align: left; vertical-align: top; }
   img { max-width: 100%; height: auto; }
   a { color: inherit; }
+  /* WordPress galleries: one full-width image per row (the theme's thumbnail grid is unreadable on a TV). */
+  .gallery { display: block; }
+  .gallery .gallery-item { float: none; width: 100%; margin: 0 0 20px; }
+  .gallery dt, .gallery dd { margin: 0; }
+  .gallery img { display: block; width: 100%; height: auto; border: 0; }
   #right-column, .side-content, .show-mobile, .pum, .pum-overlay { display: none !important; }
 </style>
 <script>
@@ -183,6 +204,11 @@ ${content}
       }
       ['href', 'src'].forEach(function (k) { if (n.hasAttribute(k)) n.setAttribute(k, new URL(n.getAttribute(k), src).href); });
     });
+    el.querySelectorAll('img').forEach(function (i) {
+      ['srcset', 'sizes', 'loading', 'decoding'].forEach(function (a) { i.removeAttribute(a); });
+      i.setAttribute('src', i.getAttribute('src').replace(/-\\d+x\\d+(\\.(?:png|jpe?g|gif|webp))$/i, '$1'));
+    });
+    el.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(function (h) { if (!h.textContent.trim()) h.remove(); });
     return el;
   }
   function norm(s) { return s.replace(/\\s+/g, ' ').replace(/> </g, '><').trim(); }
